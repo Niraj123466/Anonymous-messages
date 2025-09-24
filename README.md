@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## True Feedback — Anonymous Messages Platform
 
-## Getting Started
+An anonymous messaging web app where users can register, share a public link, and receive anonymous feedback/messages in their dashboard. Built with modern Next.js App Router, JWT-based NextAuth, MongoDB, and a clean UI using Tailwind and shadcn/ui.
 
-First, run the development server:
+• Deployed: [anonymous-messages-kappa.vercel.app/sign-in](https://anonymous-messages-kappa.vercel.app/sign-in)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Table of Contents
+- Overview
+- Features & Use Cases
+- Tech Stack
+- Architecture & Key Files
+- Environment Variables
+- Local Development
+- Production Deployment (Vercel)
+- API Endpoints (high-level)
+- Security Notes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Overview
+True Feedback allows anyone to create an account, verify via email, and receive anonymous messages. Users can toggle whether they are accepting new messages, view them in a dashboard, and delete messages they don’t want to keep.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Features & Use Cases
+- Authentication: Email/username + password via NextAuth Credentials with JWT sessions
+- Email verification: Verification codes sent via Resend
+- Public profile page: `/{username}` to receive messages
+- Private dashboard: View and manage received messages
+- Accepting messages toggle: Control whether new messages are allowed
+- Username availability check during sign-up
+- Validation: Zod schemas for robust input validation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Typical use cases:
+- Creators or teams collecting candid feedback
+- Quick suggestion boxes for products/classes/events
+- Anonymous Q&A for communities
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Tech Stack
+- Next.js 14 (App Router), TypeScript
+- NextAuth (JWT strategy) for auth
+- MongoDB + Mongoose (Atlas recommended)
+- Tailwind CSS + shadcn/ui components
+- Resend for transactional email
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## Architecture & Key Files
+- App routes: `src/app/(auth)`, `src/app/(app)`, API under `src/app/api`
+- Auth config: `src/app/api/auth/[...nextauth]/options.ts`
+- DB connection: `src/lib/dbConnect.ts`
+- Models: `src/model/User.ts`
+- Email sending: `src/helpers/sendVerificationEmail.ts`, `src/lib/resend.ts`
+- UI components: `src/components/*` and `src/components/ui/*`
+- Middleware for route protection: `src/middleware.ts`
+
+---
+
+## Environment Variables
+Create `.env.local` for local development and set these in Vercel for Production/Preview:
+
+Required:
+- `MONGODB_URI` — Full MongoDB connection string (include database name). Example:
+  - `mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority`
+- `NEXTAUTH_URL` — e.g. `http://localhost:3000` (prod: your Vercel URL)
+- `NEXTAUTH_SECRET` — a strong random string (e.g., `openssl rand -base64 32`)
+- `RESEND_API_KEY` — your Resend API key
+
+Notes:
+- If your MongoDB user authenticates in `admin`, add `&authSource=admin`.
+- URL-encode special characters in passwords.
+
+---
+
+## Local Development
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Add `.env.local` with the variables above.
+3. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+4. Visit `http://localhost:3000`.
+
+---
+
+## Production Deployment (Vercel)
+1. Push the repository to GitHub/GitLab/Bitbucket.
+2. In Vercel, import the project and ensure Next.js preset is detected.
+3. Add Environment Variables for Production (and Preview). Include `MONGODB_URI`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `RESEND_API_KEY`.
+4. Ensure MongoDB Atlas Network Access allows connections from Vercel (quick start: `0.0.0.0/0`).
+5. Deploy. After the first deploy, set `NEXTAUTH_URL` to the exact production URL and redeploy.
+
+Deployed app: [anonymous-messages-kappa.vercel.app/sign-in](https://anonymous-messages-kappa.vercel.app/sign-in)
+
+---
+
+## API Endpoints (high-level)
+- `POST /api/sign-up` — create user and send verification email
+- `POST /api/verify-code` — verify account
+- `POST /api/auth/[...nextauth]` — NextAuth auth routes (credentials)
+- `GET /api/get-messages` — fetch messages for the authenticated user
+- `POST /api/send-message` — send anonymous message to a user
+- `DELETE /api/delete-message/:messageId` — delete a message
+- `POST /api/accept-messages` — toggle accepting messages
+- `GET /api/check-username-unique` — check username availability
+- `GET /api/suggest-messages` — suggestion seeds
+
+---
+
+## Security Notes
+- Do not commit secrets; use environment variables.
+- Move any hardcoded keys (e.g., Resend) into env vars.
+- Use strong `NEXTAUTH_SECRET` and rotate keys carefully.
+- Restrict MongoDB Network Access in production when possible.
+
+---
+
+## License
+This project is provided as-is; add a license file if you plan public distribution.
